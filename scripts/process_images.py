@@ -24,7 +24,7 @@ def make_square_jpg(src_path, dst_path, size=1024):
     resized.save(dst_path, "JPEG", quality=92)
     print(f"Saved JPG: {dst_path}")
 
-def make_cutout_png(src_path, dst_path, canvas_size=1024, target_size=800, alpha_thresh=60):
+def make_cutout_png(src_path, dst_path, canvas_size=1024, target_size=800, alpha_thresh=60, crop_y_bottom=None):
     im = Image.open(src_path)
     out = remove(im)
     arr = np.array(out)
@@ -40,8 +40,10 @@ def make_cutout_png(src_path, dst_path, canvas_size=1024, target_size=800, alpha
         clean_arr = arr.copy()
         clean_arr[~dilated_mask] = 0
         clean_arr[alpha < 15] = 0
+        if crop_y_bottom is not None:
+            clean_arr[crop_y_bottom:, :] = 0
 
-        ys, xs = np.where(dilated_mask)
+        ys, xs = np.where(clean_arr[:, :, 3] > 10)
         ymin, ymax = max(0, int(ys.min()) - 2), min(out.height, int(ys.max()) + 2)
         xmin, xmax = max(0, int(xs.min()) - 2), min(out.width, int(xs.max()) + 2)
 
@@ -113,7 +115,20 @@ for kind, pattern, out_name in mappings:
     if kind == "jpg":
         make_square_jpg(src, dst)
     else:
-        make_cutout_png(src, dst)
+        target_size = 800
+        crop_y_bottom = None
+        if "lemon-raspberry" in out_name:
+            target_size = 840
+            crop_y_bottom = 545
+        elif "pistachio-rose" in out_name:
+            target_size = 850
+        elif "bento" in out_name:
+            target_size = 860
+        make_cutout_png(src, dst, target_size=target_size, crop_y_bottom=crop_y_bottom)
+        # Also save versioned -v2 copy for cache busting
+        v2_name = out_name.replace(".png", "-v2.png")
+        if v2_name != out_name and any(k in out_name for k in ["lemon-raspberry", "pistachio-rose", "bento"]):
+            make_cutout_png(src, os.path.join(IMAGES_DIR, v2_name), target_size=target_size, crop_y_bottom=crop_y_bottom)
 
 # Create thumbnail for cupcake
 im_cupcake = Image.open(os.path.join(IMAGES_DIR, "vanilla-strawberry-cutout.png"))

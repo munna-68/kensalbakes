@@ -96,10 +96,15 @@ function estimate(d: Draft, pct: number) {
 const money = (n: number) => `£${n % 1 ? n.toFixed(2) : n}`;
 
 function describe(d: Draft) {
-  const items: { name: string; qty: number }[] = [];
+  const items: { name: string; qty: number; cutout?: string }[] = [];
   let title = "";
   if (d.category === "cookies" || d.category === "cupcakes") {
-    for (const [id, qty] of Object.entries(d.flavours)) if (qty > 0) items.push({ name: menu.find((m) => m.id === id)!.name, qty });
+    for (const [id, qty] of Object.entries(d.flavours)) {
+      if (qty > 0) {
+        const m = menu.find((item) => item.id === id);
+        if (m) items.push({ name: m.name, qty, cutout: m.cutout });
+      }
+    }
     const size = sizeOf(d);
     const festive = Object.keys(d.flavours).some((id) => d.flavours[id] > 0 && menu.find((m) => m.id === id)?.christmas);
     title = d.category === "cookies" ? `${festive ? "Christmas cookie box" : "Filled cookies"}, ${size?.label.toLowerCase()}` : `${size?.label} cupcakes`;
@@ -107,13 +112,16 @@ function describe(d: Draft) {
   if (d.category === "cakes") {
     const size = orderOptions.cakes.sizes.find((s) => s.id === d.sizeId);
     const flavour = cakeFlavours.find((f) => f.id === d.cakeFlavour);
-    title = `${size?.label} ${flavour?.name.toLowerCase() ?? ""} cake`;
-    if (flavour) items.push({ name: flavour.name, qty: 1 });
+    title = `${size?.label ?? ""} ${flavour?.name.toLowerCase() ?? ""} cake`.trim();
+    if (flavour) items.push({ name: flavour.name, qty: 1, cutout: flavour.cutout });
   }
   if (d.category === "favours") {
     const type = orderOptions.favours.types.find((t) => t.id === d.favourType);
     title = `${d.favourQty} ${type?.label.toLowerCase() ?? "favours"}`;
-    if (type) items.push({ name: type.label, qty: d.favourQty });
+    if (type) {
+      const favCutout = type.id === "mini-cookie" ? "/images/biscoff-cookie-cutout.png" : type.id === "mini-cupcake" ? "/images/vanilla-strawberry-cutout.png" : "/images/favour-cutout.png";
+      items.push({ name: type.label, qty: d.favourQty, cutout: favCutout });
+    }
   }
   return { title, items };
 }
@@ -522,12 +530,19 @@ function Summary({ draft, est, progress, className = "" }: { draft: Draft; est: 
             <dd className="text-right text-choc">{v}</dd>
           </div>
         ))}
-        {items.length > 1 && (
+        {items.length > 0 && (
           <ul className="space-y-1.5 rounded-2xl bg-paper/70 p-3 text-[13px]">
             {items.map((i) => (
-              <li key={i.name} className="flex justify-between gap-3 text-cocoa">
-                <span>{i.name}</span>
-                <span className="tabular-nums">× {i.qty}</span>
+              <li key={i.name} className="flex items-center justify-between gap-3 text-cocoa">
+                <span className="flex min-w-0 items-center gap-2">
+                  {i.cutout && (
+                    <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full bg-[#eedfc3]">
+                      <Image src={i.cutout} alt="" fill sizes="24px" className="object-contain p-0.5" />
+                    </span>
+                  )}
+                  <span className="truncate">{i.name}</span>
+                </span>
+                <span className="tabular-nums font-mono text-choc">× {i.qty}</span>
               </li>
             ))}
           </ul>
@@ -707,10 +722,22 @@ function StepFlavours({ draft, update, available }: StepProps & { available: Rec
           const qty = draft.flavours[f.id] ?? 0;
           const off = !available[f.id];
           return (
-            <li key={f.id} data-step-item className={`flex items-center gap-4 py-3 ${off ? "opacity-45" : ""}`}>
-              <Placeholder art={f.art} tone={f.tone} festive={f.christmas} className="h-12 w-12 shrink-0 rounded-full" />
+            <li key={f.id} data-step-item className={`group flex items-center gap-4 py-3 ${off ? "opacity-45" : ""}`}>
+              <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full border border-line/60 bg-[#eedfc3] shadow-sm">
+                {f.cutout || f.image ? (
+                  <Image
+                    src={f.cutout || f.image!}
+                    alt={f.name}
+                    fill
+                    sizes="56px"
+                    className="object-contain p-1 transition-transform duration-500 group-hover:scale-110"
+                  />
+                ) : (
+                  <Placeholder art={f.art} tone={f.tone} festive={f.christmas} className="h-full w-full" />
+                )}
+              </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[15px] text-choc">{f.name}</p>
+                <p className="truncate text-[15px] font-medium text-choc">{f.name}</p>
                 <p className="text-[12px] text-mocha">{off ? "Sold out for now" : f.christmas ? "Christmas special · limited time" : f.seasonal ? "Limited time only" : f.priceNote}</p>
               </div>
               <Stepper2 value={qty} disabled={off} onChange={(v) => setQty(f.id, v)} />
@@ -777,9 +804,21 @@ function CakeOptions({ draft, update, available }: StepProps & { available: Reco
             disabled={!available[f.id]}
             className="flex items-center gap-3 p-2.5 pr-10"
           >
-            <Placeholder art={f.art} tone={f.tone} festive={f.christmas} className="h-14 w-14 shrink-0 rounded-[12px]" />
+            <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[12px] border border-line/50 bg-[#eedfc3] shadow-sm">
+              {f.cutout || f.image ? (
+                <Image
+                  src={f.cutout || f.image!}
+                  alt={f.name}
+                  fill
+                  sizes="56px"
+                  className="object-contain p-1 transition-transform duration-500 group-hover:scale-105"
+                />
+              ) : (
+                <Placeholder art={f.art} tone={f.tone} festive={f.christmas} className="h-full w-full" />
+              )}
+            </div>
             <span>
-              <span className="block text-[15px] text-choc">{f.name}</span>
+              <span className="block text-[15px] font-medium text-choc">{f.name}</span>
               <span className="block text-[12px] text-mocha">
                 {!available[f.id] ? "Sold out for now" : f.christmas ? "Christmas special" : f.price > 45 ? `+${money(f.price - 45)}` : "Included"}
               </span>
@@ -791,6 +830,12 @@ function CakeOptions({ draft, update, available }: StepProps & { available: Reco
   );
 }
 
+const FAVOUR_IMAGES: Record<string, string> = {
+  "mini-cookie": "/images/biscoff-cookie-cutout.png",
+  "iced-biscuit": "/images/favour-cutout.png",
+  "mini-cupcake": "/images/vanilla-strawberry-cutout.png",
+};
+
 function FavourOptions({ draft, update }: StepProps) {
   const { min, step, types } = orderOptions.favours;
   return (
@@ -798,8 +843,16 @@ function FavourOptions({ draft, update }: StepProps) {
       <div className="grid gap-3 sm:grid-cols-3">
         {types.map((t) => (
           <Choice key={t.id} selected={draft.favourType === t.id} onClick={() => update({ favourType: t.id })} className="overflow-hidden p-2.5">
-            <Placeholder art="favour" tone={t.tone} className="aspect-[4/3] rounded-[14px]" />
-            <p className="px-2 pt-3 text-[15px] text-choc">{t.label}</p>
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[14px] bg-[#eedfc3]">
+              <Image
+                src={FAVOUR_IMAGES[t.id] ?? "/images/favour-cutout.png"}
+                alt={t.label}
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-contain p-3 transition-transform duration-700 group-hover:scale-105"
+              />
+            </div>
+            <p className="px-2 pt-3 text-[15px] font-medium text-choc">{t.label}</p>
             <p className="px-2 pb-2 text-[12.5px] text-mocha">{money(t.unit)} each</p>
           </Choice>
         ))}
@@ -1180,7 +1233,20 @@ function StepReview({ draft, est, pct, onEdit }: { draft: Draft; est: ReturnType
         1,
         <>
           <p className="font-display text-xl">{title.charAt(0).toUpperCase() + title.slice(1)}</p>
-          {items.length > 1 && <p className="mt-1 text-[13.5px] text-cocoa">{items.map((i) => `${i.qty} × ${i.name}`).join(" · ")}</p>}
+          {items.length > 0 && (
+            <div className="mt-3 space-y-2">
+              {items.map((i) => (
+                <div key={i.name} className="flex items-center gap-2.5 text-[14px] text-cocoa">
+                  {i.cutout && (
+                    <span className="relative h-7 w-7 shrink-0 overflow-hidden rounded-full border border-line/50 bg-[#eedfc3]">
+                      <Image src={i.cutout} alt="" fill sizes="28px" className="object-contain p-0.5" />
+                    </span>
+                  )}
+                  <span className="font-medium text-choc">{i.qty} × {i.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </>,
       )}
       {block("Collection", 2, `${draft.date ? formatLong(draft.date) : ""} · ${slot?.label}, ${slot?.time}`)}

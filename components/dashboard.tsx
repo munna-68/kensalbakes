@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { gsap, useGSAP, prefersReducedMotion } from "@/lib/motion";
@@ -630,7 +631,13 @@ function SeasonalToggles() {
       <ul className="-mx-1 max-h-[340px] divide-y divide-line overflow-y-auto pr-1" data-lenis-prevent>
         {seasonal.map((m) => (
           <li key={m.id} className="flex items-center gap-3 px-1 py-2.5">
-            <Placeholder art={m.art} tone={m.tone} festive={m.christmas} className={`h-10 w-10 shrink-0 rounded-full transition-[filter] ${available[m.id] ? "" : "grayscale"}`} />
+            <div className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-full border border-line/60 bg-[#eedfc3] transition-[filter] ${available[m.id] ? "" : "grayscale"}`}>
+              {m.cutout || m.image ? (
+                <Image src={m.cutout || m.image!} alt={m.name} fill sizes="40px" className="object-contain p-0.5" />
+              ) : (
+                <Placeholder art={m.art} tone={m.tone} festive={m.christmas} className="h-full w-full" />
+              )}
+            </div>
             <div className="min-w-0 flex-1">
               <p className={`truncate text-[14px] ${available[m.id] ? "text-choc" : "text-mocha line-through"}`}>{m.name}</p>
               <p className="text-[11.5px] text-mocha">{m.christmas ? "Christmas special" : "Limited time"} · {m.category}</p>
@@ -920,7 +927,13 @@ function MenuView() {
                 .filter((m) => m.category === c)
                 .map((m) => (
                   <li key={m.id} className="flex items-center gap-3 py-2.5">
-                    <Placeholder art={m.art} tone={m.tone} festive={m.christmas} className={`h-10 w-10 shrink-0 rounded-xl ${available[m.id] ? "" : "grayscale"}`} />
+                    <div className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-line/60 bg-[#eedfc3] transition-[filter] ${available[m.id] ? "" : "grayscale"}`}>
+                      {m.cutout || m.image ? (
+                        <Image src={m.cutout || m.image!} alt={m.name} fill sizes="40px" className="object-contain p-0.5" />
+                      ) : (
+                        <Placeholder art={m.art} tone={m.tone} festive={m.christmas} className="h-full w-full" />
+                      )}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <p className={`truncate text-[14px] ${available[m.id] ? "" : "text-mocha line-through"}`}>{m.name}</p>
                       <p className="text-[11.5px] text-mocha">
