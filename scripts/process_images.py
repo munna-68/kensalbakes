@@ -1,6 +1,8 @@
 import os, glob
 from PIL import Image
 from rembg import remove
+import numpy as np
+import scipy.ndimage
 
 IMAGES_DIR = "public/images"
 
@@ -22,27 +24,44 @@ def make_square_jpg(src_path, dst_path, size=1024):
     resized.save(dst_path, "JPEG", quality=92)
     print(f"Saved JPG: {dst_path}")
 
-def make_cutout_png(src_path, dst_path, canvas_size=1024, target_size=820):
+def make_cutout_png(src_path, dst_path, canvas_size=1024, target_size=800, alpha_thresh=60):
     im = Image.open(src_path)
     out = remove(im)
-    bbox = out.getbbox()
-    if bbox:
-        cropped = out.crop(bbox)
+    arr = np.array(out)
+    alpha = arr[:, :, 3]
+
+    labeled, num_features = scipy.ndimage.label(alpha > alpha_thresh)
+    if num_features > 0:
+        sizes = scipy.ndimage.sum(alpha > alpha_thresh, labeled, range(1, num_features + 1))
+        largest_label = int(np.argmax(sizes) + 1)
+        main_mask = (labeled == largest_label)
+        dilated_mask = scipy.ndimage.binary_dilation(main_mask, iterations=4)
+
+        clean_arr = arr.copy()
+        clean_arr[~dilated_mask] = 0
+        clean_arr[alpha < 15] = 0
+
+        ys, xs = np.where(dilated_mask)
+        ymin, ymax = max(0, int(ys.min()) - 2), min(out.height, int(ys.max()) + 2)
+        xmin, xmax = max(0, int(xs.min()) - 2), min(out.width, int(xs.max()) + 2)
+
+        clean_im = Image.fromarray(clean_arr)
+        cropped = clean_im.crop((xmin, ymin, xmax, ymax))
         w, h = cropped.size
         scale = target_size / max(w, h)
         new_w = int(w * scale)
         new_h = int(h * scale)
         resized = cropped.resize((new_w, new_h), Image.Resampling.LANCZOS)
-        
+
         canvas = Image.new("RGBA", (canvas_size, canvas_size), (0, 0, 0, 0))
         paste_x = (canvas_size - new_w) // 2
         paste_y = (canvas_size - new_h) // 2
         canvas.paste(resized, (paste_x, paste_y), resized)
         canvas.save(dst_path, "PNG")
-        print(f"Saved Cutout PNG: {dst_path}")
+        print(f"Saved Cutout PNG: {dst_path} ({new_w}x{new_h})")
     else:
         out.save(dst_path, "PNG")
-        print(f"Saved fallback PNG (no bbox): {dst_path}")
+        print(f"Saved fallback PNG (no mask): {dst_path}")
 
 mappings = [
     # Cookies

@@ -300,9 +300,9 @@ function HeartCakeFeature() {
   );
 
   const frames = [
-    { src: "/images/heart-cake-cutout.png", alt: "Vintage heart cake with pink piping and bows", cut: true },
-    { src: "/images/vintage-heart-cake.jpg", alt: "Vintage heart cake from above", cut: false },
-    { src: "/images/heart-cake.jpg", alt: "Heart cake, piped by hand", cut: false },
+    { src: "/images/vintage-heart-cake.jpg", alt: "Vintage heart cake, piped by hand", cut: false },
+    { src: "/images/pistachio-rose-cake.jpg", alt: "Pistachio and rose celebration cake", cut: false },
+    { src: "/images/spiced-orange-cake.jpg", alt: "Spiced orange and cranberry winter cake", cut: false },
   ];
 
   return (

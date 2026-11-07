@@ -19,7 +19,7 @@ const KEY = "kb-preloaded";
 
 const SEQUENCE = [
   { src: "/images/biscoff-cookie-cutout.png", name: "Biscoff cookie" },
-  { src: "/images/donut-cutout.png", name: "Sprinkle doughnut" },
+  { src: "/images/vanilla-strawberry-cutout.png", name: "Swirl cupcake" },
   { src: "/images/croissant-cutout.png", name: "Butter croissant" },
   { src: "/images/heart-cake-cutout.png", name: "Vintage heart cake" },
   { src: "/images/kinder-bueno-cutout.png", name: "Kinder Bueno cookie" },
