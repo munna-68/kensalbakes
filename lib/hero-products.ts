@@ -2,7 +2,7 @@
 // preloader's final frame). Swap or reorder freely: each is a transparent PNG
 // in /public/images plus a small thumbnail.
 export const HERO_PRODUCTS = [
-  { id: "pouch", src: "/images/hero-pouch-cutout.png", thumb: "/images/hero-pouch-cutout.png", name: "Hand-cooked crisps" },
+  { id: "cupcake", src: "/images/vanilla-strawberry-cutout.png", thumb: "/images/thumb-cupcake.png", name: "Swirl cupcake" },
   { id: "croissant", src: "/images/croissant-cutout.png", thumb: "/images/thumb-croissant.png", name: "Butter croissant" },
   { id: "donut", src: "/images/donut-cutout.png", thumb: "/images/thumb-donut.png", name: "Sprinkle doughnut" },
   { id: "cookie", src: "/images/biscoff-cookie-cutout.png", thumb: "/images/thumb-cookie.png", name: "Biscoff cookie" },

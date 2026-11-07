@@ -613,6 +613,8 @@ function Choice({
 const CUTOUT: Partial<Record<Category, string>> = {
   cookies: "/images/biscoff-cookie-cutout.png",
   cakes: "/images/heart-cake-cutout.png",
+  cupcakes: "/images/vanilla-strawberry-cutout.png",
+  favours: "/images/favour-cutout.png",
 };
 
 function StepTreat({ value, onPick }: { value: Category | null; onPick: (c: Category) => void }) {
